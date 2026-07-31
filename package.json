@@ -6,17 +6,9 @@
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": [
-    "whatsapp",
-    "bot",
-    "cjs"
-  ],
-  "author": "Putra",
-  "license": "MIT",
-  "description": "",
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "latest",
+    "@whiskeysockets/baileys": "7.0.0-rc.14",
     "pino": "^9.7.0"
   }
 }
