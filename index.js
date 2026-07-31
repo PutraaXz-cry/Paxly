@@ -22,22 +22,18 @@ async function start() {
 
     sock.ev.on("creds.update", saveCreds);
 
-    let asked = false;
-
     sock.ev.on("connection.update", async ({ connection, lastDisconnect }) => {
         if (connection === "open") {
             console.clear();
-            console.log("✓ Bot Connected");
+            console.log("✓ Connected");
+            handler(sock);
         }
 
         if (
             connection === "connecting" &&
             !sock.authState.creds.registered &&
-            config.pairing &&
-            !asked
+            config.pairing
         ) {
-            asked = true;
-
             const rl = readline.createInterface({
                 input: process.stdin,
                 output: process.stdout
@@ -53,12 +49,12 @@ async function start() {
                     console.log("╭─ Pairing Code");
                     console.log(`│ ${code}`);
                     console.log("╰────────────");
-                } catch (e) {
+                } catch (err) {
                     console.log("Gagal mendapatkan pairing code.");
-                    console.log(e.message);
-                } finally {
-                    rl.close();
+                    console.log(err.message);
                 }
+
+                rl.close();
             });
         }
 
@@ -72,8 +68,6 @@ async function start() {
             }
         }
     });
-
-    handler(sock);
 }
 
 start();
