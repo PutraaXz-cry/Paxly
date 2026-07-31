@@ -1,19 +1,11 @@
 const {
     default: makeWASocket,
     useMultiFileAuthState,
-    fetchLatestBaileysVersion,
-    DisconnectReason
+    fetchLatestBaileysVersion
 } = require("@whiskeysockets/baileys");
-const { Boom } = require("@hapi/boom");
-const Pino = require("pino");
 const readline = require("readline");
 const config = require("./config");
 const handler = require("./lib/handler");
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
 
 (async () => {
     const { state, saveCreds } = await useMultiFileAuthState(config.sessionName);
@@ -22,41 +14,32 @@ const rl = readline.createInterface({
     const sock = makeWASocket({
         auth: state,
         version,
-        logger: Pino({ level: "silent" }),
-        browser: ["Ubuntu", "Chrome", "22.04.4"]
+        browser: [config.botName, "Chrome", "1.0.0"]
     });
 
     sock.ev.on("creds.update", saveCreds);
 
-    let requested = false;
+    if (!sock.authState.creds.registered && config.pairing) {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
 
-    sock.ev.on("connection.update", async ({ connection, lastDisconnect }) => {
-        if (connection === "open") {
-            console.log("Connected.");
-        }
+        rl.question("Nomor WhatsApp: ", async (number) => {
+            try {
+                const code = await sock.requestPairingCode(number.replace(/\D/g, ""));
 
-        if (connection === "connecting" && !sock.authState.creds.registered && !requested) {
-            requested = true;
+                console.clear();
+                console.log("╭─ Pairing Code");
+                console.log(`│ ${code}`);
+                console.log("╰────────────");
 
-            rl.question("Nomor WhatsApp: ", async (number) => {
-                try {
-                    const code = await sock.requestPairingCode(number.replace(/\D/g, ""));
-                    console.log(`\nPairing Code: ${code}\n`);
-                    rl.close();
-                } catch (err) {
-                    console.log(err.message);
-                }
-            });
-        }
-
-        if (connection === "close") {
-            const reason = new Boom(lastDisconnect?.error).output.statusCode;
-
-            if (reason !== DisconnectReason.loggedOut) {
-                process.exit(1);
+                rl.close();
+            } catch (err) {
+                console.error(err);
             }
-        }
-    });
+        });
+    }
 
     handler(sock);
 })();
