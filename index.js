@@ -31,7 +31,7 @@ async function start() {
 
         if (
             connection === "connecting" &&
-            !sock.authState.creds.registered &&
+            !state.creds.registered &&
             config.pairing
         ) {
             const rl = readline.createInterface({
